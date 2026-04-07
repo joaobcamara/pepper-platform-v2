@@ -1,136 +1,113 @@
 export async function handler(event) {
-  try {
-    const { productContext } = JSON.parse(event.body || "{}");
-
-    if (!productContext) {
-      return response(400, { error: "Descrição não enviada" });
-    }
-
-    const prompt = `
-Você é um especialista em e-commerce.
-
-Gere conteúdos profissionais com base na descrição abaixo.
-
-IMPORTANTE:
-- Responda APENAS em JSON válido
-- NÃO inclua texto fora do JSON
-- NÃO use crases
-- NÃO use explicações
-
-Formato obrigatório:
-
-{
-  "tiny": {
-    "titulo": "",
-    "descricao": "",
-    "slug": "",
-    "keywords": "",
-    "seoTitle": "",
-    "seoDesc": ""
-  },
-  "shopee": {
-    "unidade": { "titulo": "", "descricao": "" },
-    "kit3": { "titulo": "", "descricao": "" },
-    "kit5": { "titulo": "", "descricao": "" },
-    "kit8": { "titulo": "", "descricao": "" }
-  },
-  "ml": {
-    "unidade": { "titulo": "", "descricao": "" },
-    "kit3": { "titulo": "", "descricao": "" },
-    "kit5": { "titulo": "", "descricao": "" },
-    "kit8": { "titulo": "", "descricao": "" }
-  },
-  "tiktok": {
-    "unidade": { "titulo": "", "descricao": "" },
-    "kit3": { "titulo": "", "descricao": "" },
-    "kit5": { "titulo": "", "descricao": "" },
-    "kit8": { "titulo": "", "descricao": "" }
-  }
-}
-
-REGRAS:
-- Títulos um pouco maiores, com 1 ou 2 palavras a mais
-- Tiny e Mercado Livre sem emojis
-- Shopee e TikTok com emojis leves
-- Descrições completas e profissionais
-
-Formato da descrição:
-Parágrafo inicial explicando o produto e benefícios
-
-Principais Características:
-• lista detalhada
-
-Tamanhos Disponíveis:
-(se houver)
-
-Cores Disponíveis:
-(se houver)
-
-Indicado Para:
-...
-
-Produto:
-${productContext}
-`;
-
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    const data = await res.json();
-    let content = data?.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("Resposta vazia da IA");
-    }
-
-    const start = content.indexOf("{");
-    const end = content.lastIndexOf("}");
-
-    if (start === -1 || end === -1) {
-      throw new Error("JSON inválido retornado pela IA");
-    }
-
-    const jsonString = content.slice(start, end + 1);
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonString);
-    } catch {
-      throw new Error("Erro ao fazer parse do JSON");
-    }
-
-    return response(200, parsed);
-  } catch (error) {
-    console.error("Erro:", error.message);
-
-    return response(500, {
-      error: "Erro ao gerar conteúdo",
-      detalhe: error.message,
-    });
-  }
-}
-
-function response(statusCode, body) {
-  return {
+  const json = (statusCode, payload) => ({
     statusCode,
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json; charset=utf-8",
     },
-    body: JSON.stringify(body),
-  };
+    body: JSON.stringify(payload),
+  });
+
+  try {
+    if (event.httpMethod !== "POST") {
+      return json(405, { error: "Método não permitido." });
+    }
+
+    const body = JSON.parse(event.body || "{}");
+    const productContext = body.productContext || "";
+
+    if (!productContext.trim()) {
+      return json(400, { error: "O campo productContext é obrigatório." });
+    }
+
+    return json(200, {
+      tiny: {
+        titulo: "Calcinha Tapa Fralda Infantil com Babado em Organza Premium",
+        descricao:
+          "A calcinha tapa fralda infantil com babado em organza foi desenvolvida para oferecer charme, conforto e excelente acabamento para compor looks delicados e elegantes.\n\nPrincipais Características:\n• Modelo infantil com acabamento refinado\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Fita cetim na ponta e laço central acetinado\n• Elástico embutido no cós e nas pernas com acabamento acetinado\n\nTamanhos Disponíveis:\n• Tamanho único\n• Veste de 6 meses com fralda até 2 anos sem fralda\n\nCores Disponíveis:\n• Pink, rosé, rosa claro, vermelho, branco, salmão, lilás, vinho, preto, azul claro, azul marinho, creme, verde claro, amarelo, laranja, verde esmeralda e bege\n\nIndicado Para:\n• Ensaios fotográficos\n• Festas e aniversários\n• Produção de looks infantis delicados",
+        slug: "calcinha-tapa-fralda-infantil-babado-organza-premium",
+        keywords:
+          "calcinha tapa fralda infantil, calcinha infantil babado, tapa fralda organza, calcinha bebê luxo",
+        seoTitle:
+          "Calcinha Tapa Fralda Infantil com Babado em Organza Premium",
+        seoDesc:
+          "Calcinha tapa fralda infantil com babado em organza, acabamento acetinado, tamanho único e diversas cores disponíveis.",
+      },
+      shopee: {
+        unidade: {
+          titulo: "✨ Calcinha Tapa Fralda Infantil com Babado Organza Premium",
+          descricao:
+            "A calcinha tapa fralda infantil foi criada para deixar o look da bebê ainda mais delicado, confortável e encantador.\n\nPrincipais Características:\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Laço central acetinado com acabamento refinado\n• Elástico embutido no cós e nas pernas\n• Tamanho único\n\nCores Disponíveis:\n• Diversas opções de cores para combinar com vários looks\n\nIndicado Para:\n• Festinhas\n• Ensaios fotográficos\n• Produções infantis delicadas",
+        },
+        kit3: {
+          titulo: "✨ Kit 3 Calcinhas Tapa Fralda Infantil com Babado Premium",
+          descricao:
+            "O kit com 3 calcinhas tapa fralda infantis é ideal para quem busca variedade, praticidade e excelente apresentação em peças delicadas para bebê.\n\nPrincipais Características:\n• 3 unidades com acabamento refinado\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Laço central acetinado\n• Tamanho único\n\nIndicado Para:\n• Uso em diferentes ocasiões\n• Quem deseja mais opções de cores e combinações",
+        },
+        kit5: {
+          titulo: "✨ Kit 5 Calcinhas Tapa Fralda Infantil com Babado Luxo",
+          descricao:
+            "O kit com 5 calcinhas tapa fralda infantis oferece mais variedade e custo-benefício para montar looks delicados com acabamento premium.\n\nPrincipais Características:\n• 5 unidades\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Acabamento acetinado no cós e pernas\n• Tamanho único\n\nIndicado Para:\n• Uso frequente\n• Ensaios, festas e looks especiais",
+        },
+        kit8: {
+          titulo: "✨ Kit 8 Calcinhas Tapa Fralda Infantil com Babado Premium",
+          descricao:
+            "O kit com 8 calcinhas tapa fralda infantis é perfeito para quem quer máxima variedade, praticidade e excelente apresentação em peças infantis delicadas.\n\nPrincipais Características:\n• 8 unidades com acabamento refinado\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Laço central acetinado\n• Tamanho único\n\nIndicado Para:\n• Rotina com mais praticidade\n• Quem quer variedade de cores e combinações",
+        },
+      },
+      ml: {
+        unidade: {
+          titulo: "Calcinha Tapa Fralda Infantil com Babado em Organza Premium",
+          descricao:
+            "A calcinha tapa fralda infantil com babado em organza foi desenvolvida para oferecer charme, conforto e excelente acabamento para compor looks delicados.\n\nPrincipais Características:\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Fita cetim na ponta e laço central acetinado\n• Elástico embutido no cós e nas pernas\n• Acabamento acetinado\n\nTamanhos Disponíveis:\n• Tamanho único\n• Veste de 6 meses com fralda até 2 anos sem fralda\n\nCores Disponíveis:\n• Grande variedade de cores\n\nIndicado Para:\n• Produções infantis delicadas\n• Ensaios e festas",
+        },
+        kit3: {
+          titulo: "Kit 3 Calcinhas Tapa Fralda Infantil com Babado Premium",
+          descricao:
+            "Kit com 3 calcinhas tapa fralda infantis ideal para quem busca praticidade, variedade e excelente acabamento em peças delicadas.\n\nPrincipais Características:\n• 3 unidades\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Laço central acetinado\n• Tamanho único\n\nIndicado Para:\n• Uso frequente\n• Produções infantis e ocasiões especiais",
+        },
+        kit5: {
+          titulo: "Kit 5 Calcinhas Tapa Fralda Infantil com Babado Luxo",
+          descricao:
+            "Kit com 5 calcinhas tapa fralda infantis pensado para ampliar a variedade de looks com conforto e ótimo acabamento.\n\nPrincipais Características:\n• 5 unidades\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Acabamento refinado\n• Tamanho único\n\nIndicado Para:\n• Uso recorrente\n• Festas, ensaios e looks especiais",
+        },
+        kit8: {
+          titulo: "Kit 8 Calcinhas Tapa Fralda Infantil com Babado Premium",
+          descricao:
+            "Kit com 8 calcinhas tapa fralda infantis para quem deseja maior variedade, praticidade e excelente apresentação.\n\nPrincipais Características:\n• 8 unidades\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Laço central acetinado\n• Tamanho único\n\nIndicado Para:\n• Uso contínuo\n• Composição de diversos looks infantis",
+        },
+      },
+      tiktok: {
+        unidade: {
+          titulo: "✨ Calcinha Tapa Fralda Infantil Babado Organza Delicada",
+          descricao:
+            "A calcinha tapa fralda infantil é perfeita para criar looks delicados, charmosos e confortáveis para a bebê.\n\nPrincipais Características:\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Laço central acetinado\n• Elástico embutido no cós e pernas\n• Tamanho único\n\nIndicado Para:\n• Looks infantis especiais\n• Ensaios e festas",
+        },
+        kit3: {
+          titulo: "✨ Kit 3 Tapa Fralda Infantil com Babado Organza Premium",
+          descricao:
+            "Kit com 3 peças para quem quer mais variedade e praticidade em looks infantis delicados.\n\nPrincipais Características:\n• 3 unidades\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Acabamento refinado\n• Tamanho único\n\nIndicado Para:\n• Festas\n• Produções infantis",
+        },
+        kit5: {
+          titulo: "✨ Kit 5 Tapa Fralda Infantil com Babado Organza Luxo",
+          descricao:
+            "Kit com 5 peças ideal para quem busca mais opções de cores e ótimo custo-benefício em peças infantis delicadas.\n\nPrincipais Características:\n• 5 unidades\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Laço central acetinado\n• Tamanho único\n\nIndicado Para:\n• Ensaios fotográficos\n• Looks especiais",
+        },
+        kit8: {
+          titulo: "✨ Kit 8 Tapa Fralda Infantil com Babado Organza Premium",
+          descricao:
+            "Kit com 8 peças para montar vários looks delicados com praticidade, variedade e excelente acabamento.\n\nPrincipais Características:\n• 8 unidades\n• Babado em organza e cambraia ou renda\n• Material 100% poliéster\n• Acabamento refinado\n• Tamanho único\n\nIndicado Para:\n• Uso recorrente\n• Produções infantis especiais",
+        },
+      },
+    });
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({
+        error: error?.message || "Erro interno no servidor.",
+      }),
+    };
+  }
 }
