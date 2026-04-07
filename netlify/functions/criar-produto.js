@@ -1,8 +1,8 @@
 export async function handler(event) {
   try {
-    const { descricao } = JSON.parse(event.body);
+    const { productContext } = JSON.parse(event.body || "{}");
 
-    if (!descricao) {
+    if (!productContext) {
       return response(400, { error: "Descrição não enviada" });
     }
 
@@ -22,52 +22,55 @@ Formato obrigatório:
 {
   "tiny": {
     "titulo": "",
-    "descricao": ""
+    "descricao": "",
+    "slug": "",
+    "keywords": "",
+    "seoTitle": "",
+    "seoDesc": ""
   },
   "shopee": {
-    "titulo": "",
-    "descricao": ""
+    "unidade": { "titulo": "", "descricao": "" },
+    "kit3": { "titulo": "", "descricao": "" },
+    "kit5": { "titulo": "", "descricao": "" },
+    "kit8": { "titulo": "", "descricao": "" }
   },
-  "mercado_livre": {
-    "titulo": "",
-    "descricao": ""
+  "ml": {
+    "unidade": { "titulo": "", "descricao": "" },
+    "kit3": { "titulo": "", "descricao": "" },
+    "kit5": { "titulo": "", "descricao": "" },
+    "kit8": { "titulo": "", "descricao": "" }
   },
   "tiktok": {
-    "titulo": "",
-    "descricao": ""
+    "unidade": { "titulo": "", "descricao": "" },
+    "kit3": { "titulo": "", "descricao": "" },
+    "kit5": { "titulo": "", "descricao": "" },
+    "kit8": { "titulo": "", "descricao": "" }
   }
 }
 
 REGRAS:
+- Títulos um pouco maiores, com 1 ou 2 palavras a mais
+- Tiny e Mercado Livre sem emojis
+- Shopee e TikTok com emojis leves
+- Descrições completas e profissionais
 
-TÍTULOS:
-- Clareza + SEO
-- 1 a 2 palavras a mais (como solicitado)
+Formato da descrição:
+Parágrafo inicial explicando o produto e benefícios
 
-DESCRIÇÃO:
-- Texto completo e profissional
-- Seguir estrutura:
+Principais Características:
+• lista detalhada
 
-Introdução do produto
+Tamanhos Disponíveis:
+(se houver)
 
-Principais características (em lista)
+Cores Disponíveis:
+(se houver)
 
-Material
-
-Tamanhos
-
-Cores (se houver)
-
-Indicação de uso
-
-Diferenciais
-
-OBS:
-- Tiny e Mercado Livre: SEM emojis
-- Shopee e TikTok: COM emojis leves
+Indicado Para:
+...
 
 Produto:
-${descricao}
+${productContext}
 `;
 
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -89,15 +92,12 @@ ${descricao}
     });
 
     const data = await res.json();
+    let content = data?.choices?.[0]?.message?.content;
 
-    let content = data.choices?.[0]?.message?.content;
-
-    // 🧠 LIMPEZA AUTOMÁTICA (ESSA É A CHAVE)
     if (!content) {
       throw new Error("Resposta vazia da IA");
     }
 
-    // Remove possíveis textos antes/depois do JSON
     const start = content.indexOf("{");
     const end = content.lastIndexOf("}");
 
@@ -108,15 +108,13 @@ ${descricao}
     const jsonString = content.slice(start, end + 1);
 
     let parsed;
-
     try {
       parsed = JSON.parse(jsonString);
-    } catch (e) {
+    } catch {
       throw new Error("Erro ao fazer parse do JSON");
     }
 
     return response(200, parsed);
-
   } catch (error) {
     console.error("Erro:", error.message);
 
